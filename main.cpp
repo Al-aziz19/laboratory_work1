@@ -27,3 +27,24 @@ struct BMPInfoHeader {
     uint32_t biClrImportant;
 };
 #pragma pack(pop)
+
+struct Pixel {
+    uint8_t rgbtBlue;
+    uint8_t rgbtGreen;
+    uint8_t rgbtRed;
+};
+
+class BMP {
+public:
+    BMP(const std::string &filename);
+    ~BMP() = default;
+    void Save(const std::string &filename);
+    void Rotate90();
+    void RotateCounter90();
+    void GaussianFilter();
+
+private:
+    BMPHeader header;
+    BMPInfoHeader infoHeader;
+    std::vector<std::vector<Pixel>> data; 
+};
