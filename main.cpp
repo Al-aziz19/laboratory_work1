@@ -48,3 +48,61 @@ private:
     BMPInfoHeader infoHeader;
     std::vector<std::vector<Pixel>> data; 
 };
+
+BMP::BMP(const std::string &filename) {
+    std::ifstream file(filename, std::ios::binary);
+    if (!file) {
+        throw std::runtime_error("Error opening file.");
+    }
+
+    file.read(reinterpret_cast<char *>(&header), sizeof(header));
+    if (header.bfType != 0x4D42) {
+        throw std::runtime_error("File format is not BMP.");
+    }
+
+    file.read(reinterpret_cast<char *>(&infoHeader), sizeof(infoHeader));
+
+    infoHeader.biHeight = std::abs(infoHeader.biHeight);
+    infoHeader.biWidth = std::abs(infoHeader.biWidth);
+
+    if (infoHeader.biWidth == 0 || infoHeader.biHeight == 0) {
+        throw std::runtime_error("Unacceptable file size.");
+    }
+    
+    file.seekg(header.bfOffBits, file.beg);
+
+    data.resize(infoHeader.biHeight, std::vector<Pixel>(infoHeader.biWidth));
+
+    for (int i = 0; i < infoHeader.biHeight; ++i) {
+        for (int j = 0; j < infoHeader.biWidth; ++j) {
+            file.read(reinterpret_cast<char *>(&data[i][j]), sizeof(Pixel));
+            if (!file) {
+                throw std::runtime_error("Error reading file.");
+            }
+        }
+    }
+
+    file.close();
+}
+
+void BMP::Save(const std::string &filename) {
+    std::ofstream file(filename, std::ios::binary);
+    if (!file) {
+        throw std::runtime_error("File save error.");
+    }
+
+    int byte = infoHeader.biHeight * infoHeader.biWidth * sizeof(Pixel);
+
+    std::cout << "File " << filename << " uses " << byte << " bytes." << std::endl;
+
+    file.write(reinterpret_cast<const char *>(&header), sizeof(header));
+    file.write(reinterpret_cast<const char *>(&infoHeader), sizeof(infoHeader));
+
+    for (int i = 0; i < infoHeader.biHeight; ++i) {
+        for (int j = 0; j < infoHeader.biWidth; ++j) {
+            file.write(reinterpret_cast<const char *>(&data[i][j]), sizeof(Pixel));
+        }
+    }
+    
+    file.close();
+}
